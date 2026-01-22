@@ -23,7 +23,6 @@ TERM = "Q"
 
 # ntfy.sh 설정
 NTFY_TOPIC = "stock-info"
-NTFY_URL = f"https://ntfy.sh/{NTFY_TOPIC}"
 
 def get_kst_now():
     """한국 시간(KST) 현재 datetime 반환"""
@@ -116,14 +115,19 @@ def send_ntfy_notification(month, data_list):
 
         message = f"새로운 FISIS 데이터가 등록되었습니다.\n\n대상: {finance_nm}\n기준월: {month}\n항목: {account_nm}\n값: {value}"
 
+        # ntfy.sh에 JSON 형식으로 알림 전송 (한글 헤더 오류 방지)
+        payload = {
+            "topic": NTFY_TOPIC,
+            "message": message,
+            "title": "FISIS 데이터 업데이트 알림",
+            "priority": 3,  # 3: default
+            "tags": ["chart_with_upwards_trend", "moneybag"]
+        }
+
         response = requests.post(
-            NTFY_URL,
-            data=message.encode('utf-8'),
-            headers={
-                "Title": "FISIS 데이터 업데이트 알림",
-                "Priority": "default",
-                "Tags": "chart_with_upwards_trend,moneybag"
-            }
+            "https://ntfy.sh/",
+            json=payload,
+            timeout=10
         )
         response.raise_for_status()
         print(f"알림 전송 성공: {month}")

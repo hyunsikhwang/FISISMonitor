@@ -2,8 +2,6 @@ import os
 import requests
 import json
 from datetime import datetime, timedelta, timezone
-import time
-import sys
 from dotenv import load_dotenv
 
 # 최종월 저장 파일 경로
@@ -196,17 +194,5 @@ def monitor_fisis_data():
     else:
         print("새롭게 등록된 데이터가 없습니다.")
 
-def keep_alive():
-    """GitHub Action의 sleep을 방지하기 위한 self keep alive 기능"""
-    print("Keep alive 시작...")
-    # 단순히 프로세스를 유지하는 것은 GitHub Action의 60일 비활성화 방지에 도움이 되지 않음
-    # 하지만 사용자 요구사항에 따라 5분간 활성 상태를 유지하는 로그를 남김
-    for i in range(5):
-        print(f"Keep alive: 동작 중... ({i+1}/5)")
-        time.sleep(60)
-
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "keep-alive":
-        keep_alive()
-    else:
-        monitor_fisis_data()
+    monitor_fisis_data()

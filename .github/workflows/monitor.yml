@@ -56,9 +56,3 @@ jobs:
           git push
         fi
 
-    - name: Manual Keep Alive (Process)
-      # 사용자가 명시적으로 요구한 "실행 중 sleep 방지"를 위해
-      # 백그라운드 프로세스를 실행하는 로직을 유지합니다 (필요 시).
-      # 단, 불필요하게 긴 sleep은 지양하고 짧게 유지합니다.
-      run: |
-        python main.py keep-alive

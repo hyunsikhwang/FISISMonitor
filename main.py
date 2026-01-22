@@ -6,6 +6,9 @@ import time
 import sys
 from dotenv import load_dotenv
 
+# 최종월 저장 파일 경로
+LAST_MONTH_FILE = "last_month.txt"
+
 # 환경변수 로드
 load_dotenv()
 
@@ -26,6 +29,47 @@ def get_current_yyyymm():
     """현재 날짜를 YYYYMM 형식으로 반환"""
     now = datetime.now()
     return now.strftime("%Y%m")
+
+def get_last_month():
+    """저장된 최종월을 가져오거나 기본값 반환"""
+    try:
+        if os.path.exists(LAST_MONTH_FILE):
+            with open(LAST_MONTH_FILE, 'r') as f:
+                return f.read().strip()
+    except Exception as e:
+        print(f"최종월 파일 읽기 오류: {e}")
+
+    # 기본값: 1년 전 분기 시작 월
+    now = datetime.now()
+    start_year = now.year - 1
+    return f"{start_year}03"  # 1년 전 1분기 시작
+
+def save_last_month(yyyymm):
+    """최종월을 파일에 저장"""
+    try:
+        with open(LAST_MONTH_FILE, 'w') as f:
+            f.write(yyyymm)
+        print(f"최종월 저장: {yyyymm}")
+    except Exception as e:
+        print(f"최종월 파일 쓰기 오류: {e}")
+
+def generate_quarter_months(start_yyyymm, end_yyyymm):
+    """시작 연월부터 종료 연월까지의 분기 월 목록 생성 (3, 6, 9, 12월만)"""
+    months = []
+    current = datetime.strptime(start_yyyymm, "%Y%m")
+    end = datetime.strptime(end_yyyymm, "%Y%m")
+
+    while current <= end:
+        month = current.month
+        if month in [3, 6, 9, 12]:  # 분기 월만 포함
+            months.append(current.strftime("%Y%m"))
+        # 다음 달로 이동
+        if current.month == 12:
+            current = datetime(current.year + 1, 1, 1)
+        else:
+            current = datetime(current.year, current.month + 1, 1)
+
+    return months
 
 def generate_months(start_yyyymm, count=12):
     """시작 연월부터 과거로 count개월 동안의 연월 목록 생성"""
@@ -102,12 +146,19 @@ def monitor_fisis_data():
     current_yyyymm = get_current_yyyymm()
     print(f"현재 연월: {current_yyyymm}")
 
-    # 과거 12개월 동안의 연월 목록 생성
-    months = generate_months(current_yyyymm, 12)
-    print(f"모니터링할 연월 목록: {months}")
+    # 저장된 최종월 가져오기
+    last_yyyymm = get_last_month()
+    print(f"저장된 최종월: {last_yyyymm}")
 
-    # 각 연월에 대해 API 호출
-    for i, month in enumerate(months):
+    # 분기 월 목록 생성 (저장된 최종월부터 현재까지)
+    quarter_months = generate_quarter_months(last_yyyymm, current_yyyymm)
+    print(f"모니터링할 분기 월 목록: {quarter_months}")
+
+    # 새로운 데이터 발견 여부
+    new_data_found = False
+
+    # 각 분기 월에 대해 API 호출
+    for i, month in enumerate(quarter_months):
         print(f"\n{month} 데이터 확인 중...")
 
         # API 호출
@@ -123,8 +174,12 @@ def monitor_fisis_data():
 
             # 알림 전송
             send_ntfy_notification(message)
+            new_data_found = True
         else:
             print(f"{month}에는 새로운 데이터가 없습니다.")
+
+    # 현재 월을 최종월로 저장 (다음 실행 시부터는 현재 월 이후부터 확인)
+    save_last_month(current_yyyymm)
 
 def keep_alive():
     """GitHub Action sleep 방지를 위한 self keep alive 기능"""

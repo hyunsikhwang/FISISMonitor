@@ -1,0 +1,10 @@
+on:
+  schedule:
+    - cron: '*/10 * * * *' # 10분마다 실행 시도
+  workflow_dispatch: # 수동 실행용
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Cron job is working"

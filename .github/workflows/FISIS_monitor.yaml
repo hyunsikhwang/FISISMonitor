@@ -34,9 +34,12 @@ jobs:
         python main.py
 
     - name: Check in and Keep Alive
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
+        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
 
         # 데이터 업데이트가 없더라도 저장소를 활성 상태로 유지하기 위해
         # keep_alive.txt 파일에 실행 시간을 기록하여 커밋합니다.
